@@ -44,4 +44,4 @@
 ## 7. Docker Hub
 Была проведена регистрация в Docker Hub и сгенерирован Access Token. Все полученные image, в результате сборки через docker compose были запушены в Hub под названиями okoyaki/<имя_приложения>_app. Пример: https://hub.docker.com/r/okoyaki/brt_app
 
-![img7.png](res/docker_hu.png)
+![img7.png](res/docker_hub.png)
