@@ -1,0 +1,131 @@
+version: "3.9"
+
+services:
+  cdr:
+    build:
+      context: ./cdr
+      dockerfile: Dockerfile
+    image: okoyaki/cdr_app
+    restart: always
+    container_name: cdr_app
+    networks:
+      - app-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      artemis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/nexign-task
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - BROKER_URL=tcp://artemis:61616
+      - BROKER_USERNAME=guest
+      - BROKER_PASSWORD=guest
+
+  brt:
+    build:
+      context: ./brt
+      dockerfile: Dockerfile
+    image: okoyaki/brt_app
+    restart: always
+    container_name: brt_app
+    networks:
+      - app-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      artemis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/nexign-task
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - BROKER_URL=tcp://artemis:61616
+      - BROKER_USERNAME=guest
+      - BROKER_PASSWORD=guest
+
+  hrs:
+    build:
+      context: ./hrs
+      dockerfile: Dockerfile
+    image: okoyaki/hrs_app
+    restart: always
+    container_name: hrs_app
+    networks:
+      - app-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      artemis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/nexign-task
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - BROKER_URL=tcp://artemis:61616
+      - BROKER_USERNAME=guest
+      - BROKER_PASSWORD=guest
+
+  crm:
+    build:
+      context: ./crm
+      dockerfile: Dockerfile
+    image: okoyaki/crm_app
+    restart: always
+    container_name: crm
+    ports:
+      - "8080:8080"
+    networks:
+      - app-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      artemis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/nexign-task
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - BROKER_URL=tcp://artemis:61616
+      - BROKER_USERNAME=guest
+      - BROKER_PASSWORD=guest
+
+  artemis:
+    image: quay.io/artemiscloud/activemq-artemis-broker
+    restart: always
+    container_name: artemis
+    ports:
+      - "61616:61616/tcp"
+    environment:
+      AMQ_USER: "guest"
+      AMQ_PASSWORD: "guest"
+    networks:
+      - app-net
+
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready","-d","postgres","-U","postgres" ]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+      start_period: 5s
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "nexign-task"
+    # Добавление файла initDB.sql, в котором хранятся скрипты инициализации БД.
+    volumes:
+      - ./volumes/initDB.sql:/sql/initDB.sql
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    name: app-net
+    driver: bridge
